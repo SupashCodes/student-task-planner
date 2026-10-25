@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import TaskCard from '../components/TaskCard';
 import TaskFormModal from '../components/TaskFormModal';
 
-const API_BASE = 'http://localhost:5001/api/tasks';
+const API_BASE = '/api/tasks';
 
 const Dashboard = () => {
   const { user } = useAuth();

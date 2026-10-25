@@ -1,13 +1,22 @@
 {
-  "name": "wp-mini-project",
+  "name": "student-task-planner",
   "version": "1.0.0",
   "description": "Student Task & Study Planner - Web Programming Lab Mini Project (MERN Stack)",
   "scripts": {
+    "build": "cd client && npm install && npm run build",
     "server": "cd server && npm run dev",
     "client": "cd client && npm run dev",
     "start": "node server/server.js"
   },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.1"
+  },
   "keywords": ["mern", "react", "express", "node", "mongodb", "mini-project"],
-  "author": "",
+  "author": "Supash",
   "license": "ISC"
 }
