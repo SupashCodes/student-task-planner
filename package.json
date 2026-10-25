@@ -1,0 +1,13 @@
+{
+  "name": "wp-mini-project",
+  "version": "1.0.0",
+  "description": "Student Task & Study Planner - Web Programming Lab Mini Project (MERN Stack)",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "start": "node server/server.js"
+  },
+  "keywords": ["mern", "react", "express", "node", "mongodb", "mini-project"],
+  "author": "",
+  "license": "ISC"
+}
