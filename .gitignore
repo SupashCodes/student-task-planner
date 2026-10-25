@@ -8,11 +8,6 @@ client/node_modules/
 .env.local
 server/.env
 
-# Build output
-dist/
-build/
-client/dist/
-
 # Logs
 npm-debug.log*
 yarn-debug.log*
