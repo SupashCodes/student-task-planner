@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 
 dotenv.config();
 
@@ -10,9 +11,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-const authRoutes = require('./routes/authRoutes');
-const taskRoutes = require('./routes/taskRoutes');
+// Serve static frontend files (built from client)
+const clientDistPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientDistPath));
 
 // Health check route - does NOT require DB
 app.get('/api/health', (req, res) => {
@@ -52,10 +53,10 @@ const connectDB = async () => {
   }
 };
 
-// Middleware to check DB connection for API routes
+// Middleware to check DB connection for API routes only
 app.use(async (req, res, next) => {
-  // Skip DB check for health check
-  if (req.path === '/api/health' || req.path === '/health') {
+  // Only check DB for /api/ routes (except health)
+  if (!req.path.startsWith('/api') || req.path === '/api/health') {
     return next();
   }
 
@@ -74,8 +75,20 @@ app.use(async (req, res, next) => {
   next();
 });
 
+// API Routes
+const authRoutes = require('./routes/authRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+
+// Fallback all non-API routes to index.html (SPA client routing)
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    return res.sendFile(path.join(clientDistPath, 'index.html'));
+  }
+  res.status(404).json({ message: 'API route not found' });
+});
 
 // For local development
 const PORT = process.env.PORT || 5001;
