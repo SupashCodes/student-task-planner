@@ -14,37 +14,70 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);
-
-// Health check route
+// Health check route - does NOT require DB
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Student Task & Study Planner API is running' });
+  res.json({
+    status: 'ok',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.VERCEL ? 'vercel' : 'local'
+  });
 });
 
-// Database connection helper (supports both local and serverless Vercel)
-let isConnected = false;
+// Database connection helper with fast timeout
+let isConnecting = false;
 const connectDB = async () => {
-  if (isConnected || mongoose.connection.readyState >= 1) {
-    return;
+  if (mongoose.connection.readyState === 1) {
+    return true;
   }
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/student_planner';
+  if (isConnecting) return false;
+
+  const uri = process.env.MONGO_URI || (process.env.VERCEL ? null : 'mongodb://127.0.0.1:27017/student_planner');
+  if (!uri) {
+    console.warn('MONGO_URI is not set.');
+    return false;
+  }
+
+  isConnecting = true;
   try {
-    const db = await mongoose.connect(MONGO_URI);
-    isConnected = db.connections[0].readyState === 1;
-    console.log('Successfully connected to MongoDB.');
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 4000
+    });
+    console.log('MongoDB connected successfully');
+    isConnecting = false;
+    return true;
   } catch (err) {
-    console.error('Error connecting to MongoDB:', err.message);
+    console.error('MongoDB connection error:', err.message);
+    isConnecting = false;
+    return false;
   }
 };
 
-// Middleware to ensure DB connection before handling requests
+// Middleware to check DB connection for API routes
 app.use(async (req, res, next) => {
-  await connectDB();
+  // Skip DB check for health check
+  if (req.path === '/api/health' || req.path === '/health') {
+    return next();
+  }
+
+  // Attempt connection if not connected
+  if (mongoose.connection.readyState !== 1) {
+    const connected = await connectDB();
+    if (!connected) {
+      return res.status(503).json({
+        message: process.env.VERCEL
+          ? 'Database not connected. Please set MONGO_URI in your Vercel project environment variables (using MongoDB Atlas).'
+          : 'Could not connect to local MongoDB. Please make sure MongoDB is running on port 27017.'
+      });
+    }
+  }
+
   next();
 });
 
-// For local development, listen on PORT
+app.use('/api/auth', authRoutes);
+app.use('/api/tasks', taskRoutes);
+
+// For local development
 const PORT = process.env.PORT || 5001;
 if (!process.env.VERCEL) {
   connectDB().then(() => {
@@ -54,5 +87,4 @@ if (!process.env.VERCEL) {
   });
 }
 
-// Export app for Vercel serverless deployment
 module.exports = app;

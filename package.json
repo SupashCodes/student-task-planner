@@ -5,8 +5,7 @@
   "scripts": {
     "build": "cd client && npm install && npm run build",
     "server": "cd server && npm run dev",
-    "client": "cd client && npm run dev",
-    "start": "node server/server.js"
+    "client": "cd client && npm run dev"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
